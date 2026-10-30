@@ -6,38 +6,37 @@
   <title>ห้องเรียนเงียบกริบ - Quiet Classroom</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; }
-    body { background-color: #1a1a2e; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    body { background-color: #1a1a2e; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 16px; }
     .container { width: 100%; max-width: 800px; background: #16213e; padding: 24px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); text-align: center; }
     
-    /* หน้า Home */
     .screen { display: none; }
     .screen.active { display: block; }
     h1 { margin-bottom: 20px; font-size: 26px; color: #4ecca3; }
     .settings { margin-bottom: 24px; background: #0f3460; padding: 16px; border-radius: 12px; text-align: left; }
     .setting-group { margin-bottom: 12px; }
     label { display: block; margin-bottom: 6px; font-size: 14px; }
-    input[type="number"], input[type="range"] { width: 100%; padding: 8px; border-radius: 8px; border: none; }
+    input[type="number"], input[type="range"] { width: 100%; padding: 8px; border-radius: 8px; border: none; accent-color: #4ecca3; }
     
-    /* หน้ารายการสกิน */
     .skins-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .skin-card { background: #0f3460; border: 2px solid transparent; border-radius: 12px; padding: 12px; cursor: pointer; transition: 0.2s; }
-    .skin-card.selected { border-color: #4ecca3; background: #1f4068; }
-    .skin-card img, .skin-card .placeholder { width: 100%; height: 120px; border-radius: 8px; background: #e94560; display: flex; justify-content: center; align-items: center; font-size: 40px; margin-bottom: 8px; }
+    .skin-card { background: #0f3460; border: 2px solid #4ecca3; border-radius: 12px; padding: 12px; cursor: pointer; }
+    .skin-card .placeholder { width: 100%; height: 120px; border-radius: 8px; background: #e94560; display: flex; justify-content: center; align-items: center; font-size: 40px; margin-bottom: 8px; }
     
-    /* หน้าเล่นเกม */
-    .timer-display { font-size: 56px; font-weight: bold; color: #e94560; margin-bottom: 12px; }
+    .timer-display { font-size: 64px; font-weight: bold; color: #e94560; margin-bottom: 8px; letter-spacing: 2px; }
     .video-container { position: relative; width: 100%; height: 350px; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
     video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
     .fallback-card { position: absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; font-size: 20px; background: #222; }
     
-    /* แถบวัดเสียง */
-    .meter-container { width: 100%; height: 16px; background: #333; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
-    .meter-bar { width: 0%; height: 100%; background: #4ecca3; transition: width 0.1s ease; }
+    /* กล่องแผงควบคุมเสียงในหน้าเล่นเกม */
+    .live-tuning-panel { background: #0f3460; padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; text-align: left; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .tuning-item label { font-size: 12px; color: #a5b1c2; display: flex; justify-content: space-between; }
+    
+    .meter-container { width: 100%; height: 16px; background: #333; border-radius: 8px; overflow: hidden; margin-bottom: 16px; position: relative; }
+    .meter-bar { width: 0%; height: 100%; background: #4ecca3; transition: width 0.05s ease; }
     .meter-bar.warning { background: #f39c12; }
     .meter-bar.danger { background: #e74c3c; }
+    .threshold-marker { position: absolute; top: 0; bottom: 0; width: 3px; background: #e74c3c; z-index: 2; }
 
-    /* ปุ่มกด */
-    .btn { background: #4ecca3; color: #1a1a2e; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; margin: 4px; }
+    .btn { background: #4ecca3; color: #1a1a2e; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; }
     .btn:hover { background: #38b58b; }
     .btn-danger { background: #e94560; color: #fff; }
   </style>
@@ -45,7 +44,7 @@
 <body>
 
 <div class="container">
-  <!-- 1. หน้าแรก (Home & เลือกสกิน) -->
+  <!-- หน้าแรก (Home) -->
   <div id="home-screen" class="screen active">
     <h1>ระบบควบคุมเสียงห้องเรียน</h1>
     
@@ -54,15 +53,11 @@
         <label>เวลาที่ต้องการนับถอยหลัง (นาที):</label>
         <input type="number" id="time-input" value="10" min="1" max="120">
       </div>
-      <div class="setting-group">
-        <label>เกณฑ์ระดับเสียงที่ยอมรับได้ (ความไวไมค์): <span id="thresh-val">40</span></label>
-        <input type="range" id="threshold-input" min="10" max="80" value="40">
-      </div>
     </div>
 
-    <h3>เลือกสกินเกม:</h3>
+    <h3>สกินปัจจุบัน:</h3>
     <div class="skins-grid">
-      <div class="skin-card selected" onclick="selectSkin('rabbit')">
+      <div class="skin-card">
         <div class="placeholder">🐰🐺</div>
         <strong>กระต่ายหนีหมาป่า</strong>
       </div>
@@ -71,11 +66,10 @@
     <button class="btn" onclick="startGame()">เริ่มจับเวลา</button>
   </div>
 
-  <!-- 2. หน้าเล่นเกม (Game Screen) -->
+  <!-- หน้าเล่นเกม (Game Screen) -->
   <div id="game-screen" class="screen">
     <div class="timer-display" id="timer">10:00</div>
     
-    <!-- กล่องแสดงวิดีโอ (สลับคลิปตามระดับเสียง) -->
     <div class="video-container">
       <video id="game-video" autoplay loop muted playsinline></video>
       <div id="fallback-view" class="fallback-card">
@@ -84,9 +78,27 @@
       </div>
     </div>
 
-    <!-- แถบวัดเสียงแบบเรียลไทม์ -->
-    <label style="font-size: 12px; display:block; margin-bottom:4px;">ระดับเสียงไมโครโฟน:</label>
+    <!-- แผงปรับระดับเสียงสดระหว่างเล่นเกม -->
+    <div class="live-tuning-panel">
+      <div class="tuning-item">
+        <label>
+          <span>ความกว้างห้อง/ขยายเสียง (Gain):</span>
+          <span id="gain-val">1.0x</span>
+        </label>
+        <input type="range" id="gain-slider" min="0.5" max="3.0" step="0.1" value="1.0">
+      </div>
+      <div class="tuning-item">
+        <label>
+          <span>เกณฑ์ความเงียบ (Threshold):</span>
+          <span id="thresh-val">40</span>
+        </label>
+        <input type="range" id="threshold-slider" min="10" max="90" value="40">
+      </div>
+    </div>
+
+    <!-- หลอดเดซิเบล พร้อมเส้นขีดแดงบอกระดับเป้าหมาย -->
     <div class="meter-container">
+      <div id="thresh-line" class="threshold-marker" style="left: 40%;"></div>
       <div id="meter-fill" class="meter-bar"></div>
     </div>
 
@@ -97,7 +109,6 @@
 </div>
 
 <script>
-  // 1. ตั้งค่าข้อมูลสกิน
   const SKINS = {
     rabbit: {
       name: "กระต่ายหนีหมาป่า",
@@ -110,31 +121,24 @@
   };
 
   let selectedSkin = 'rabbit';
-  let audioContext, analyser, microphone, javascriptNode;
-  let timerInterval, checkAudioInterval;
+  let audioContext, analyser, microphone, javascriptNode, gainNode;
+  let timerInterval;
   let remainingSeconds = 600;
   let isGameOver = false;
 
-  function selectSkin(skinKey) {
-    selectedSkin = skinKey;
-  }
-
-  // 2. เริ่มต้นเกม & ดึงไมโครโฟน
   async function startGame() {
     const mins = parseInt(document.getElementById('time-input').value) || 10;
     remainingSeconds = mins * 60;
     isGameOver = false;
 
     try {
-      // ขออนุญาตใช้ไมโครโฟน
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       setupAudio(stream);
     } catch (err) {
-      alert("กรุณากดยินยอม (Allow) ให้เบราว์เซอร์เข้าถึงไมโครโฟน");
+      alert("กรุณากดยินยอมให้เบราว์เซอร์เข้าถึงไมโครโฟน");
       return;
     }
 
-    // สลับหน้าจอ
     document.getElementById('home-screen').classList.remove('active');
     document.getElementById('game-screen').classList.add('active');
 
@@ -143,17 +147,19 @@
     setGameState('normal');
   }
 
-  // 3. ระบบคำนวณเสียง (Web Audio API)
   function setupAudio(stream) {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioContext.createAnalyser();
     microphone = audioContext.createMediaStreamSource(stream);
+    gainNode = audioContext.createGain(); // โหนดเร่ง/ลดความไวไมค์
     javascriptNode = audioContext.createScriptProcessor(2048, 1, 1);
 
     analyser.smoothingTimeConstant = 0.8;
     analyser.fftSize = 1024;
 
-    microphone.connect(analyser);
+    // เชื่อมต่อ: ไมค์ -> ปรับ Gain -> วิเคราะห์ความถี่ -> ประมวลผล
+    microphone.connect(gainNode);
+    gainNode.connect(analyser);
     analyser.connect(javascriptNode);
     javascriptNode.connect(audioContext.destination);
 
@@ -166,30 +172,26 @@
       for (let i = 0; i < array.length; i++) {
         values += array[i];
       }
-      const average = values / array.length; // ค่าความดัง (0 - 100+)
+      const average = values / array.length;
       handleNoiseLevel(average);
     };
   }
 
-  // 4. สลับสถานะตามระดับเสียง
   function handleNoiseLevel(volume) {
-    const threshold = parseInt(document.getElementById('threshold-input').value) || 40;
+    const threshold = parseInt(document.getElementById('threshold-slider').value) || 40;
     const meter = document.getElementById('meter-fill');
     
-    // อัปเดตแถบวัดเสียง
+    // แสดงผลแถบเสียง
     const widthVal = Math.min(volume * 2, 100);
     meter.style.width = widthVal + '%';
 
-    if (volume < threshold) {
-      // ระดับ 1: ปกติ
+    if (widthVal < threshold) {
       meter.className = 'meter-bar';
       setGameState('normal');
-    } else if (volume >= threshold && volume < threshold + 20) {
-      // ระดับ 2: ซวยแล้ว (เริ่มดัง)
+    } else if (widthVal >= threshold && widthVal < threshold + 20) {
       meter.className = 'meter-bar warning';
       setGameState('warning');
     } else {
-      // ระดับ 3: บรรลัย (ดังเกินพิกัด)
       meter.className = 'meter-bar danger';
       setGameState('danger');
     }
@@ -227,7 +229,6 @@
     clearInterval(timerInterval);
   }
 
-  // 5. ระบบนับเวลาถอยหลัง
   function startTimer() {
     timerInterval = setInterval(() => {
       remainingSeconds--;
@@ -256,9 +257,20 @@
     currentState = '';
   }
 
-  // ปรับตัวเลข Slider
-  document.getElementById('threshold-input').addEventListener('input', (e) => {
-    document.getElementById('thresh-val').textContent = e.target.value;
+  // อัปเดตค่า Gain (ความไวไมค์) แบบสดๆ
+  document.getElementById('gain-slider').addEventListener('input', (e) => {
+    const val = parseFloat(e.target.value);
+    document.getElementById('gain-val').textContent = val.toFixed(1) + 'x';
+    if (gainNode) {
+      gainNode.gain.value = val;
+    }
+  });
+
+  // อัปเดตเส้นขีด Threshold สีแดงแบบสดๆ
+  document.getElementById('threshold-slider').addEventListener('input', (e) => {
+    const val = e.target.value;
+    document.getElementById('thresh-val').textContent = val;
+    document.getElementById('thresh-line').style.left = val + '%';
   });
 </script>
 </body>
