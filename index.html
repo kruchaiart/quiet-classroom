@@ -75,7 +75,6 @@
     
     <div class="video-container">
       <div class="overlay-message" id="status-badge">🎬 กำลังโหลดวิดีโอ...</div>
-      <!-- ใส่ muted และ autoplay คืนไว้ตรงนี้เพื่อผ่านนโยบาย Autoplay Policy -->
       <video id="game-video" playsinline muted autoplay></video>
     </div>
 
@@ -111,6 +110,7 @@
 <div class="preload-cache" id="preload-container"></div>
 
 <script>
+  // ** ตรวจสอบชื่อไฟล์ตรงนี้ให้เหมือนบน GitHub เป๊ะๆ **
   const SKINS = {
     rabbit: {
       name: "กระต่ายหนีหมาป่า",
@@ -173,8 +173,6 @@
     document.getElementById('game-screen').classList.add('active');
 
     updateTimerDisplay();
-
-    // พอผู้ใช้กดปุ่มแล้ว ค่อยเปิดเสียงตามสถานะ isMuted
     videoEl.muted = isMuted;
 
     playIntroVideo();
@@ -183,11 +181,7 @@
   function toggleMute() {
     isMuted = !isMuted;
     videoEl.muted = isMuted;
-    if (isMuted) {
-      muteBtn.textContent = '🔇 ปิดเสียงวิดีโออยู่';
-    } else {
-      muteBtn.textContent = '🔊 เปิดเสียงวิดีโออยู่';
-    }
+    muteBtn.textContent = isMuted ? '🔇 ปิดเสียงวิดีโออยู่' : '🔊 เปิดเสียงวิดีโออยู่';
   }
 
   function playIntroVideo() {
@@ -196,18 +190,38 @@
     videoEl.loop = false;
     statusBadge.textContent = "🎬 กำลังเข้าสู่ที่ซ่อน...";
 
+    // ตัวป้องกันกรณีหาไฟล์วิดีโอไม่เจอ ให้ข้ามคัตซีนไปเริ่มเกมทันทีใน 3 วินาที
+    const fallbackTimer = setTimeout(() => {
+      if (isIntroPlaying) {
+        console.warn("Video load timeout, skipping intro...");
+        finishIntro();
+      }
+    }, 3000);
+
+    videoEl.onerror = () => {
+      console.error("Error loading intro video path:", skin.videos.intro);
+      clearTimeout(fallbackTimer);
+      finishIntro();
+    };
+
     videoEl.play().catch(err => {
-      console.log("Autoplay retry with muted:", err);
-      // ถ้าระบบยังบล็อกอยู่ ให้เล่นแบบ Muted ชั่วคราวเพื่อให้วิดีโอขึ้นแน่นอน
       videoEl.muted = true;
-      videoEl.play();
+      videoEl.play().catch(() => {
+        clearTimeout(fallbackTimer);
+        finishIntro();
+      });
     });
 
     videoEl.onended = () => {
-      isIntroPlaying = false;
-      startTimer();
-      setGameState('normal');
+      clearTimeout(fallbackTimer);
+      finishIntro();
     };
+  }
+
+  function finishIntro() {
+    isIntroPlaying = false;
+    startTimer();
+    setGameState('normal');
   }
 
   function setupAudio(stream) {
@@ -312,6 +326,7 @@
   }
 
   function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
       remainingSeconds--;
       updateTimerDisplay();
