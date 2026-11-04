@@ -38,6 +38,9 @@
     .btn { background: #4ecca3; color: #1a1a2e; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; }
     .btn:hover { background: #38b58b; }
     .btn-danger { background: #e94560; color: #fff; }
+    
+    /* ซ่อนการทำ Preload วิดีโอ */
+    .preload-cache { display: none; }
   </style>
 </head>
 <body>
@@ -70,7 +73,7 @@
     <div class="timer-display" id="timer">10:00</div>
     
     <div class="video-container">
-      <div class="overlay-message" id="status-badge">🎬 กำลังเริ่มเรื่องราว...</div>
+      <div class="overlay-message" id="status-badge">🎬 กำลังโหลดวิดีโอ...</div>
       <video id="game-video" playsinline muted></video>
     </div>
 
@@ -102,17 +105,19 @@
   </div>
 </div>
 
+<!-- แท็กซ่อนสำหรับ Preload วิดีโอล่วงหน้ากันกระตุก -->
+<div class="preload-cache" id="preload-container"></div>
+
 <script>
-  // 1. กำหนดไฟล์วิดีโอทั้ง 5 ตัว
   const SKINS = {
     rabbit: {
       name: "กระต่ายหนีหมาป่า",
       videos: {
-        intro: "videos/rabbit_intro.mp4",     // คัตซีนเริ่มเกม
-        normal: "videos/rabbit_normal.mp4",   // ระดับปกติ
-        warning: "videos/rabbit_warning.mp4", // ระดับซวยแล้ว
-        danger: "videos/rabbit_danger.mp4",   // ระดับลาก่อน
-        success: "videos/rabbit_success.mp4"  // ฉากรอดตาย
+        intro: "videos/rabbit_intro.mp4",
+        normal: "videos/rabbit_normal.mp4",
+        warning: "videos/rabbit_warning.mp4",
+        danger: "videos/rabbit_danger.mp4",
+        success: "videos/rabbit_success.mp4"
       }
     }
   };
@@ -123,17 +128,35 @@
   let remainingSeconds = 600;
   let isGameOver = false;
   let isIntroPlaying = true;
+  let isWarningLocked = false; // ตัวล็อกฉากซวยแล้ว
   let currentState = '';
+  let pendingState = ''; // สถานะที่รอกลับไปหลังเล่นวิดีโอซวยแล้วจบ
 
   const videoEl = document.getElementById('game-video');
   const statusBadge = document.getElementById('status-badge');
+
+  // ดึงวิดีโอมารอในแคชตั้งแต่เปิดหน้าเว็บ
+  function preloadAllVideos() {
+    const container = document.getElementById('preload-container');
+    container.innerHTML = '';
+    const skin = SKINS[selectedSkin];
+    Object.values(skin.videos).forEach(src => {
+      const v = document.createElement('video');
+      v.src = src;
+      v.preload = 'auto';
+      container.appendChild(v);
+    });
+  }
+  preloadAllVideos();
 
   async function startGame() {
     const mins = parseInt(document.getElementById('time-input').value) || 10;
     remainingSeconds = mins * 60;
     isGameOver = false;
     isIntroPlaying = true;
+    isWarningLocked = false;
     currentState = '';
+    pendingState = '';
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
@@ -147,8 +170,6 @@
     document.getElementById('game-screen').classList.add('active');
 
     updateTimerDisplay();
-
-    // ขั้นที่ 1: เล่นคลิป Intro ก่อน
     playIntroVideo();
   }
 
@@ -160,7 +181,6 @@
 
     videoEl.play().catch(() => {});
 
-    // เมื่อคัตซีนเริ่มเกมเล่นจบ ให้เริ่มนับเวลาและเริ่มวัดเสียงเข้าสู่โหมดปกติ
     videoEl.onended = () => {
       isIntroPlaying = false;
       startTimer();
@@ -184,7 +204,6 @@
     javascriptNode.connect(audioContext.destination);
 
     javascriptNode.onaudioprocess = function() {
-      // ถ้าคัตซีนเปิดยังไม่จบ หรือเกมจบแล้ว ไม่ต้องประมวลผลเสียง
       if (isGameOver || isIntroPlaying) return;
 
       const array = new Uint8Array(analyser.frequencyBinCount);
@@ -218,7 +237,22 @@
   }
 
   function setGameState(state) {
-    if (currentState === state || isGameOver || isIntroPlaying) return;
+    if (isGameOver || isIntroPlaying) return;
+    
+    // ถ้ากำลังล็อกฉากซวยแล้วอยู่
+    if (isWarningLocked) {
+      // ถ้าระดับเสียงพุ่งไปถึง "ลาก่อน" ให้ปลดล็อกแล้วตัดไปลาก่อนทันที!
+      if (state === 'danger') {
+        isWarningLocked = false;
+        videoEl.onended = null;
+      } else {
+        // ถ้าเสียงเบาลงเป็น "ปกติ" ให้จำไว้ก่อน รอให้วิดีโอซวยแล้วเล่นจบก่อนค่อยสลับ
+        pendingState = state;
+        return;
+      }
+    }
+
+    if (currentState === state) return;
     currentState = state;
 
     const skin = SKINS[selectedSkin];
@@ -230,17 +264,32 @@
       videoEl.play().catch(() => {});
     } 
     else if (state === 'warning') {
+      isWarningLocked = true; // เริ่มล็อกฉาก
+      pendingState = 'warning';
       videoEl.src = skin.videos.warning;
-      videoEl.loop = true;
+      videoEl.loop = false; // เล่นรอบเดียวให้จบก่อน
       statusBadge.textContent = "⚠️ ซวยแล้ว: เริ่มเสียงดัง หมาป่ากำลังหันมามอง!";
       videoEl.play().catch(() => {});
+
+      // เมื่อวิดีโอซวยแล้วเล่นจบ 1 รอบ
+      videoEl.onended = () => {
+        isWarningLocked = false;
+        // เช็กว่าระหว่างที่วิดีโอเล่น เด็กเงียบหรือยัง
+        if (pendingState === 'normal') {
+          setGameState('normal');
+        } else {
+          // ถ้ายังไม่เงียบ เล่นซ้ำฉากซวยแล้วต่อ
+          currentState = '';
+          setGameState('warning');
+        }
+      };
     } 
     else if (state === 'danger') {
-      // ระดับลาก่อน: เล่นคลิปจบครั้งเดียวแล้วหยุดเวลาทันที
       isGameOver = true;
       clearInterval(timerInterval);
       videoEl.src = skin.videos.danger;
       videoEl.loop = false;
+      videoEl.onended = null;
       statusBadge.textContent = "💀 ลาก่อน: หมาป่าจับได้แล้ว! ภารกิจล้มเหลว!";
       videoEl.play().catch(() => {});
     }
@@ -251,7 +300,6 @@
       remainingSeconds--;
       updateTimerDisplay();
 
-      // เมื่อเวลานับถอยหลังหมดพอดี เข้าสู่ฉากรอดตาย
       if (remainingSeconds <= 0) {
         triggerSuccess();
       }
@@ -264,6 +312,7 @@
     const skin = SKINS[selectedSkin];
     videoEl.src = skin.videos.success;
     videoEl.loop = false;
+    videoEl.onended = null;
     statusBadge.textContent = "🎉 รอดตายแล้ว! หมดเวลา ห้องเรียนทำสำเร็จ!";
     videoEl.play().catch(() => {});
   }
