@@ -35,11 +35,12 @@
     .meter-bar.danger { background: #e74c3c; }
     .threshold-marker { position: absolute; top: 0; bottom: 0; width: 3px; background: #e74c3c; z-index: 2; }
 
+    .btn-group { display: flex; justify-content: center; gap: 12px; }
     .btn { background: #4ecca3; color: #1a1a2e; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; }
     .btn:hover { background: #38b58b; }
+    .btn-secondary { background: #0f3460; color: #fff; border: 1px solid #4ecca3; }
     .btn-danger { background: #e94560; color: #fff; }
     
-    /* ซ่อนการทำ Preload วิดีโอ */
     .preload-cache { display: none; }
   </style>
 </head>
@@ -74,7 +75,8 @@
     
     <div class="video-container">
       <div class="overlay-message" id="status-badge">🎬 กำลังโหลดวิดีโอ...</div>
-      <video id="game-video" playsinline muted></video>
+      <!-- ถอด muted ออกจากแท็ก video -->
+      <video id="game-video" playsinline></video>
     </div>
 
     <div class="live-tuning-panel">
@@ -99,13 +101,13 @@
       <div id="meter-fill" class="meter-bar"></div>
     </div>
 
-    <div>
+    <div class="btn-group">
+      <button class="btn btn-secondary" id="mute-btn" onclick="toggleMute()">🔊 เปิดเสียงวิดีโออยู่</button>
       <button class="btn btn-danger" onclick="stopGame()">หยุดและกลับหน้าแรก</button>
     </div>
   </div>
 </div>
 
-<!-- แท็กซ่อนสำหรับ Preload วิดีโอล่วงหน้ากันกระตุก -->
 <div class="preload-cache" id="preload-container"></div>
 
 <script>
@@ -128,14 +130,15 @@
   let remainingSeconds = 600;
   let isGameOver = false;
   let isIntroPlaying = true;
-  let isWarningLocked = false; // ตัวล็อกฉากซวยแล้ว
+  let isWarningLocked = false;
   let currentState = '';
-  let pendingState = ''; // สถานะที่รอกลับไปหลังเล่นวิดีโอซวยแล้วจบ
+  let pendingState = '';
+  let isMuted = false;
 
   const videoEl = document.getElementById('game-video');
   const statusBadge = document.getElementById('status-badge');
+  const muteBtn = document.getElementById('mute-btn');
 
-  // ดึงวิดีโอมารอในแคชตั้งแต่เปิดหน้าเว็บ
   function preloadAllVideos() {
     const container = document.getElementById('preload-container');
     container.innerHTML = '';
@@ -158,6 +161,9 @@
     currentState = '';
     pendingState = '';
 
+    // ตั้งค่าเสียงวิดีโอตามสถานะ Mute
+    videoEl.muted = isMuted;
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       setupAudio(stream);
@@ -173,13 +179,25 @@
     playIntroVideo();
   }
 
+  function toggleMute() {
+    isMuted = !isMuted;
+    videoEl.muted = isMuted;
+    if (isMuted) {
+      muteBtn.textContent = '🔇 ปิดเสียงวิดีโออยู่';
+    } else {
+      muteBtn.textContent = '🔊 เปิดเสียงวิดีโออยู่';
+    }
+  }
+
   function playIntroVideo() {
     const skin = SKINS[selectedSkin];
     videoEl.src = skin.videos.intro;
     videoEl.loop = false;
     statusBadge.textContent = "🎬 กำลังเข้าสู่ที่ซ่อน...";
 
-    videoEl.play().catch(() => {});
+    videoEl.play().catch(err => {
+      console.log("Autoplay blocked, unmuting required user action:", err);
+    });
 
     videoEl.onended = () => {
       isIntroPlaying = false;
@@ -239,14 +257,11 @@
   function setGameState(state) {
     if (isGameOver || isIntroPlaying) return;
     
-    // ถ้ากำลังล็อกฉากซวยแล้วอยู่
     if (isWarningLocked) {
-      // ถ้าระดับเสียงพุ่งไปถึง "ลาก่อน" ให้ปลดล็อกแล้วตัดไปลาก่อนทันที!
       if (state === 'danger') {
         isWarningLocked = false;
         videoEl.onended = null;
       } else {
-        // ถ้าเสียงเบาลงเป็น "ปกติ" ให้จำไว้ก่อน รอให้วิดีโอซวยแล้วเล่นจบก่อนค่อยสลับ
         pendingState = state;
         return;
       }
@@ -264,21 +279,18 @@
       videoEl.play().catch(() => {});
     } 
     else if (state === 'warning') {
-      isWarningLocked = true; // เริ่มล็อกฉาก
+      isWarningLocked = true;
       pendingState = 'warning';
       videoEl.src = skin.videos.warning;
-      videoEl.loop = false; // เล่นรอบเดียวให้จบก่อน
+      videoEl.loop = false;
       statusBadge.textContent = "⚠️ ซวยแล้ว: เริ่มเสียงดัง หมาป่ากำลังหันมามอง!";
       videoEl.play().catch(() => {});
 
-      // เมื่อวิดีโอซวยแล้วเล่นจบ 1 รอบ
       videoEl.onended = () => {
         isWarningLocked = false;
-        // เช็กว่าระหว่างที่วิดีโอเล่น เด็กเงียบหรือยัง
         if (pendingState === 'normal') {
           setGameState('normal');
         } else {
-          // ถ้ายังไม่เงียบ เล่นซ้ำฉากซวยแล้วต่อ
           currentState = '';
           setGameState('warning');
         }
