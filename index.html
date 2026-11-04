@@ -75,8 +75,8 @@
     
     <div class="video-container">
       <div class="overlay-message" id="status-badge">🎬 กำลังโหลดวิดีโอ...</div>
-      <!-- ถอด muted ออกจากแท็ก video -->
-      <video id="game-video" playsinline></video>
+      <!-- ใส่ muted และ autoplay คืนไว้ตรงนี้เพื่อผ่านนโยบาย Autoplay Policy -->
+      <video id="game-video" playsinline muted autoplay></video>
     </div>
 
     <div class="live-tuning-panel">
@@ -161,9 +161,6 @@
     currentState = '';
     pendingState = '';
 
-    // ตั้งค่าเสียงวิดีโอตามสถานะ Mute
-    videoEl.muted = isMuted;
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       setupAudio(stream);
@@ -176,6 +173,10 @@
     document.getElementById('game-screen').classList.add('active');
 
     updateTimerDisplay();
+
+    // พอผู้ใช้กดปุ่มแล้ว ค่อยเปิดเสียงตามสถานะ isMuted
+    videoEl.muted = isMuted;
+
     playIntroVideo();
   }
 
@@ -196,7 +197,10 @@
     statusBadge.textContent = "🎬 กำลังเข้าสู่ที่ซ่อน...";
 
     videoEl.play().catch(err => {
-      console.log("Autoplay blocked, unmuting required user action:", err);
+      console.log("Autoplay retry with muted:", err);
+      // ถ้าระบบยังบล็อกอยู่ ให้เล่นแบบ Muted ชั่วคราวเพื่อให้วิดีโอขึ้นแน่นอน
+      videoEl.muted = true;
+      videoEl.play();
     });
 
     videoEl.onended = () => {
