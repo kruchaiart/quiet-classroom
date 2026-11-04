@@ -26,14 +26,19 @@
     video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
     .overlay-message { position: absolute; top: 16px; left: 16px; background: rgba(0,0,0,0.6); padding: 8px 16px; border-radius: 20px; font-size: 14px; z-index: 10; }
     
-    .live-tuning-panel { background: #0f3460; padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; text-align: left; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .tuning-item label { font-size: 12px; color: #a5b1c2; display: flex; justify-content: space-between; }
+    /* แผงปรับระดับเสียง 3 ช่อง */
+    .live-tuning-panel { background: #0f3460; padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; text-align: left; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .tuning-item label { font-size: 12px; color: #a5b1c2; display: flex; justify-content: space-between; margin-bottom: 4px; }
     
-    .meter-container { width: 100%; height: 16px; background: #333; border-radius: 8px; overflow: hidden; margin-bottom: 16px; position: relative; }
+    .meter-container { width: 100%; height: 18px; background: #333; border-radius: 8px; overflow: hidden; margin-bottom: 16px; position: relative; }
     .meter-bar { width: 0%; height: 100%; background: #4ecca3; transition: width 0.05s ease; }
     .meter-bar.warning { background: #f39c12; }
     .meter-bar.danger { background: #e74c3c; }
-    .threshold-marker { position: absolute; top: 0; bottom: 0; width: 3px; background: #e74c3c; z-index: 2; }
+    
+    /* เส้นขีดบอกระดับ 2 เส้น */
+    .marker { position: absolute; top: 0; bottom: 0; width: 3px; z-index: 2; }
+    .marker-warning { background: #f1c40f; } /* เส้นสีเหลือง (เตือน) */
+    .marker-danger { background: #e74c3c; }  /* เส้นสีแดง (จบเกม) */
 
     .btn-group { display: flex; justify-content: center; gap: 12px; }
     .btn { background: #4ecca3; color: #1a1a2e; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; }
@@ -75,33 +80,43 @@
     
     <div class="video-container">
       <div class="overlay-message" id="status-badge">🎬 กำลังโหลดวิดีโอ...</div>
-      <video id="game-video" playsinline muted autoplay></video>
+      <video id="game-video" playsinline></video>
     </div>
 
+    <!-- แผงปรับเสียง 3 ค่า -->
     <div class="live-tuning-panel">
       <div class="tuning-item">
         <label>
-          <span>ความกว้างห้อง/ขยายเสียง (Gain):</span>
+          <span>ความกว้างห้อง (Gain):</span>
           <span id="gain-val">1.0x</span>
         </label>
         <input type="range" id="gain-slider" min="0.5" max="3.0" step="0.1" value="1.0">
       </div>
       <div class="tuning-item">
         <label>
-          <span>เกณฑ์ความเงียบ (Threshold):</span>
-          <span id="thresh-val">40</span>
+          <span>🟡 เริ่มเตือน (ซวยแล้ว):</span>
+          <span id="warn-val">30</span>
         </label>
-        <input type="range" id="threshold-slider" min="10" max="90" value="40">
+        <input type="range" id="warn-slider" min="10" max="80" value="30">
+      </div>
+      <div class="tuning-item">
+        <label>
+          <span>🔴 ดังเกิน (จบเกม):</span>
+          <span id="danger-val">60</span>
+        </label>
+        <input type="range" id="danger-slider" min="20" max="95" value="60">
       </div>
     </div>
 
+    <!-- หลอดเดซิเบล พร้อม 2 เส้นขีด -->
     <div class="meter-container">
-      <div id="thresh-line" class="threshold-marker" style="left: 40%;"></div>
+      <div id="warn-line" class="marker marker-warning" style="left: 30%;"></div>
+      <div id="danger-line" class="marker marker-danger" style="left: 60%;"></div>
       <div id="meter-fill" class="meter-bar"></div>
     </div>
 
     <div class="btn-group">
-      <button class="btn btn-secondary" id="mute-btn" onclick="toggleMute()">🔊 เปิดเสียงวิดีโออยู่</button>
+      <button class="btn btn-secondary" id="mute-btn" onclick="toggleMute()">🔊 เสียงวิดีโอ: เปิด</button>
       <button class="btn btn-danger" onclick="stopGame()">หยุดและกลับหน้าแรก</button>
     </div>
   </div>
@@ -110,16 +125,16 @@
 <div class="preload-cache" id="preload-container"></div>
 
 <script>
-  // ** ตรวจสอบชื่อไฟล์ตรงนี้ให้เหมือนบน GitHub เป๊ะๆ **
+  // ชื่อไฟล์วิดีโอในโฟลเดอร์ videos
   const SKINS = {
     rabbit: {
       name: "กระต่ายหนีหมาป่า",
       videos: {
-        intro: "videos/Rabbit_Intro.webm",
-        normal: "videos/Rabbit_Normal.webm",
-        warning: "videos/Rabbit_Warning.webm",
-        danger: "videos/Rabbit_Danger.webm",
-        success: "videos/Rabbit_Success.webm"
+        intro: "videos/Rabbit_Intro_.webm",
+        normal: "videos/Rabbit_Normal_.webm",
+        warning: "videos/Rabbit_Warning_.webm",
+        danger: "videos/Rabbit_Danger_.webm",
+        success: "videos/Rabbit_Success_.webm"
       }
     }
   };
@@ -173,6 +188,8 @@
     document.getElementById('game-screen').classList.add('active');
 
     updateTimerDisplay();
+
+    // บังคับเปิดเสียงทันทีที่กดยืนยันปุ่มเริ่มจับเวลา
     videoEl.muted = isMuted;
 
     playIntroVideo();
@@ -181,7 +198,7 @@
   function toggleMute() {
     isMuted = !isMuted;
     videoEl.muted = isMuted;
-    muteBtn.textContent = isMuted ? '🔇 ปิดเสียงวิดีโออยู่' : '🔊 เปิดเสียงวิดีโออยู่';
+    muteBtn.textContent = isMuted ? '🔇 เสียงวิดีโอ: ปิด' : '🔊 เสียงวิดีโอ: เปิด';
   }
 
   function playIntroVideo() {
@@ -190,26 +207,21 @@
     videoEl.loop = false;
     statusBadge.textContent = "🎬 กำลังเข้าสู่ที่ซ่อน...";
 
-    // ตัวป้องกันกรณีหาไฟล์วิดีโอไม่เจอ ให้ข้ามคัตซีนไปเริ่มเกมทันทีใน 3 วินาที
     const fallbackTimer = setTimeout(() => {
-      if (isIntroPlaying) {
-        console.warn("Video load timeout, skipping intro...");
-        finishIntro();
-      }
-    }, 3000);
+      if (isIntroPlaying) finishIntro();
+    }, 4000);
 
     videoEl.onerror = () => {
-      console.error("Error loading intro video path:", skin.videos.intro);
       clearTimeout(fallbackTimer);
       finishIntro();
     };
 
-    videoEl.play().catch(err => {
-      videoEl.muted = true;
-      videoEl.play().catch(() => {
-        clearTimeout(fallbackTimer);
-        finishIntro();
-      });
+    // เล่นวิดีโอพร้อมเสียง
+    videoEl.play().then(() => {
+      videoEl.muted = isMuted;
+    }).catch(err => {
+      console.warn("Autoplay error:", err);
+      finishIntro();
     });
 
     videoEl.onended = () => {
@@ -254,16 +266,18 @@
   }
 
   function handleNoiseLevel(volume) {
-    const threshold = parseInt(document.getElementById('threshold-slider').value) || 40;
+    const warnThresh = parseInt(document.getElementById('warn-slider').value) || 30;
+    const dangerThresh = parseInt(document.getElementById('danger-slider').value) || 60;
     const meter = document.getElementById('meter-fill');
     
     const widthVal = Math.min(volume * 2, 100);
     meter.style.width = widthVal + '%';
 
-    if (widthVal < threshold) {
+    // เช็กระดับเสียงเทียบกับ 2 ขีด
+    if (widthVal < warnThresh) {
       meter.className = 'meter-bar';
       setGameState('normal');
-    } else if (widthVal >= threshold && widthVal < threshold + 25) {
+    } else if (widthVal >= warnThresh && widthVal < dangerThresh) {
       meter.className = 'meter-bar warning';
       setGameState('warning');
     } else {
@@ -364,16 +378,23 @@
     currentState = '';
   }
 
+  // ปรับแต่งแถบสไลเดอร์สด
   document.getElementById('gain-slider').addEventListener('input', (e) => {
     const val = parseFloat(e.target.value);
     document.getElementById('gain-val').textContent = val.toFixed(1) + 'x';
     if (gainNode) gainNode.gain.value = val;
   });
 
-  document.getElementById('threshold-slider').addEventListener('input', (e) => {
+  document.getElementById('warn-slider').addEventListener('input', (e) => {
     const val = e.target.value;
-    document.getElementById('thresh-val').textContent = val;
-    document.getElementById('thresh-line').style.left = val + '%';
+    document.getElementById('warn-val').textContent = val;
+    document.getElementById('warn-line').style.left = val + '%';
+  });
+
+  document.getElementById('danger-slider').addEventListener('input', (e) => {
+    const val = e.target.value;
+    document.getElementById('danger-val').textContent = val;
+    document.getElementById('danger-line').style.left = val + '%';
   });
 </script>
 </body>
