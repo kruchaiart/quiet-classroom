@@ -25,28 +25,65 @@
       overflow: hidden;
     }
 
-    /* 1. ปุ่มทับเลือกสกิน - ขยายใหญ่บังของเดิมมิดชิด */
-    .skin-selector-overlay {
+    /* 1. ป้ายข้อความ "เลือกรูปแบบเกม" (ด้านบนกล่องสกิน) */
+    .skin-title-badge {
       position: absolute;
       top: 15.5%;
-      left: 1.2%;
-      width: 22.5%;
-      height: 19%;
-      background: #FFF8EA;
-      border: 4px solid #FFB26B;
-      border-radius: 20px;
-      padding: 6px;
+      left: 2.5%;
+      width: 18%;
+      height: 6.5%;
+      background: linear-gradient(180deg, #FF9F45 0%, #FF7B54 100%);
+      color: #FFF;
+      border: 3px solid #FFF8EA;
+      border-radius: 16px;
       display: flex;
-      gap: 6px;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+      font-size: 15px;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      z-index: 12;
+    }
+
+    /* 2. กล่องสกินแนวตั้งแบบเลื่อนขึ้น-ลง (Vertical Scroll Selector) */
+    .skin-selector-overlay {
+      position: absolute;
+      top: 23%;
+      left: 2.5%;
+      width: 18%;
+      height: 48%; /* ขยายความสูงลงมาตามเส้นร่าง */
+      background: rgba(255, 248, 234, 0.95);
+      border: 4px solid #FFB26B;
+      border-radius: 20px;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column; /* จัดเรียงปุ่มเป็นแนวตั้ง */
+      gap: 12px;
+      align-items: center;
+      overflow-y: auto; /* เปิดใช้งานการเลื่อนขึ้น-ลง */
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
       z-index: 10;
     }
 
+    /* ตกแต่ง Scrollbar ให้เข้ากับสไตล์เกมการ์ตูน */
+    .skin-selector-overlay::-webkit-scrollbar {
+      width: 6px;
+    }
+    .skin-selector-overlay::-webkit-scrollbar-track {
+      background: #FFE5AD;
+      border-radius: 10px;
+    }
+    .skin-selector-overlay::-webkit-scrollbar-thumb {
+      background: #FF7B54;
+      border-radius: 10px;
+    }
+
+    /* ปุ่มสกินแต่ละรายการทรงสี่เหลี่ยมผืนผ้าแนวนอน */
     .skin-btn {
-      flex: 1;
-      height: 100%;
+      width: 100%;
+      height: 85px;
+      min-height: 85px; /* ล็อกขนาดเมื่อเลื่อนลง */
       background: #FFE5AD;
       border: 3px solid #FFD3B6;
       border-radius: 14px;
@@ -56,15 +93,16 @@
       background-size: cover;
       background-position: center;
       transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      flex-shrink: 0;
     }
     .skin-btn.active {
       border-color: #FF7B54;
-      box-shadow: 0 0 12px rgba(255, 123, 84, 0.8);
-      transform: scale(1.05);
+      box-shadow: 0 0 12px rgba(255, 123, 84, 0.9);
+      transform: scale(1.03);
     }
     .skin-btn.locked {
       filter: grayscale(0.8);
-      opacity: 0.6;
+      opacity: 0.65;
       cursor: not-allowed;
     }
     .skin-btn.locked::after {
@@ -72,10 +110,10 @@
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 18px;
+      font-size: 22px;
     }
 
-    /* 2. ช่องทับปรับเวลานับถอยหลัง - ทับปิดเลข 60 เดิม */
+    /* 3. ช่องทับปรับเวลานับถอยหลัง */
     .timer-input-overlay {
       position: absolute;
       top: 20.8%;
@@ -103,7 +141,7 @@
       outline: none;
     }
 
-    /* 3. ปุ่มเริ่มเกมดุ๊กดิ๊ก */
+    /* 4. ปุ่มเริ่มเกมดุ๊กดิ๊ก */
     .start-btn-overlay {
       position: absolute;
       bottom: 6.5%;
@@ -131,7 +169,7 @@
       100% { transform: scale(1); }
     }
 
-    /* 4. ปุ่มฟันเฟืองตั้งค่าฉุกเฉิน */
+    /* 5. ปุ่มฟันเฟืองตั้งค่าฉุกเฉิน */
     .settings-btn-overlay {
       position: absolute;
       bottom: 3.5%;
@@ -145,7 +183,7 @@
       z-index: 10;
     }
 
-    /* วิดเจ็ตทดสอบไมค์ - ปรับย้ายตำแหน่งขึ้นขอบบน ไม่บังนาฬิกา */
+    /* วิดเจ็ตทดสอบไมค์ */
     .mic-test-widget {
       position: absolute;
       top: 2.5%;
@@ -223,7 +261,6 @@
   <!-- 1. หน้าแรก (Home Screen) -->
   <div id="home-screen" class="screen active">
     <div class="home-wrapper">
-      <!-- วิดเจ็ตทดสอบไมค์ (ย้ายขึ้นบนตรงกลาง) -->
       <div class="mic-test-widget">
         <span>🎙️ ทดสอบไมค์:</span>
         <div class="mic-bar-preview">
@@ -231,18 +268,21 @@
         </div>
       </div>
 
-      <!-- 1. ปุ่มทับเลือกสกิน (ขนาดใหญ่บังของเดิม) -->
+      <!-- ป้ายข้อความ "เลือกรูปแบบเกม" -->
+      <div class="skin-title-badge">🎮 เลือกรูปแบบเกม</div>
+
+      <!-- กล่องเลือกสกินแนวตั้งแบบเลื่อนขึ้น-ลง -->
       <div class="skin-selector-overlay" id="skin-selector-container"></div>
 
-      <!-- 2. ช่องทับปรับเวลา (มีกล่องบังเลข 60 เดิม) -->
+      <!-- ช่องปรับเวลา -->
       <div class="timer-input-overlay">
         <input type="number" id="game-time" value="60" min="10" max="600">
       </div>
 
-      <!-- 3. ปุ่มทับเริ่มเกม -->
+      <!-- ปุ่มเริ่มเกม -->
       <button class="start-btn-overlay" onclick="startGame()"></button>
 
-      <!-- 4. ปุ่มทับตั้งค่าฉุกเฉิน (ฟันเฟือง) -->
+      <!-- ปุ่มตั้งค่า -->
       <button class="settings-btn-overlay" onclick="toggleSettingsModal(true)"></button>
     </div>
   </div>
