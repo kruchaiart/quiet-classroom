@@ -19,13 +19,14 @@
       position: relative;
       width: 100%;
       aspect-ratio: 16 / 9;
-      background: url('home_bg.png') center/cover no-repeat;
+      /* ใส่ ./ นำหน้าชื่อไฟล์ภาพพื้นหลัง */
+      background: #0f3460 url('./home_bg.png') center/cover no-repeat;
       border-radius: 24px;
       box-shadow: 0 16px 40px rgba(0,0,0,0.6);
       overflow: hidden;
     }
 
-    /* 1. ปุ่มทับเลือกสกิน (Dynamic Renderer) */
+    /* 1. ปุ่มทับเลือกสกิน */
     .skin-selector-overlay {
       position: absolute;
       top: 17.5%;
@@ -131,7 +132,6 @@
       cursor: pointer;
     }
 
-    /* วิดเจ็ตทดสอบไมค์สั้นๆ บนหน้าแรก */
     .mic-test-widget {
       position: absolute;
       top: 3%;
@@ -150,7 +150,6 @@
     .mic-bar-preview { width: 60px; height: 8px; background: #ddd; border-radius: 4px; overflow: hidden; }
     .mic-bar-fill { width: 0%; height: 100%; background: #FF7B54; transition: width 0.05s ease; }
 
-    /* Modal หน้าต่างตั้งค่าแบบ Popup */
     .modal {
       display: none;
       position: fixed;
@@ -207,7 +206,6 @@
   <!-- 1. หน้าแรก (Home Screen) -->
   <div id="home-screen" class="screen active">
     <div class="home-wrapper">
-      <!-- วิดเจ็ตทดสอบไมค์ -->
       <div class="mic-test-widget">
         <span>🎙️ ไมค์:</span>
         <div class="mic-bar-preview">
@@ -215,23 +213,18 @@
         </div>
       </div>
 
-      <!-- 1. ช่องใส่ปุ่มเลือกสกินอัตโนมัติ (จะเจนจาก SKINS ใน JS) -->
       <div class="skin-selector-overlay" id="skin-selector-container"></div>
 
-      <!-- 2. ช่องทับปรับเวลา -->
       <div class="timer-input-overlay">
         <input type="number" id="game-time" value="60" min="10" max="600">
       </div>
 
-      <!-- 3. ปุ่มทับเริ่มเกม -->
       <button class="start-btn-overlay" onclick="startGame()"></button>
-
-      <!-- 4. ปุ่มทับตั้งค่าฉุกเฉิน (ฟันเฟือง) -->
       <button class="settings-btn-overlay" onclick="toggleSettingsModal(true)"></button>
     </div>
   </div>
 
-  <!-- หน้าต่าง Modal ตั้งค่าฉุกเฉิน -->
+  <!-- Modal ตั้งค่า -->
   <div id="settings-modal" class="modal">
     <div class="modal-content">
       <h3>⚙️ ตั้งค่าความไวไมโครโฟน</h3>
@@ -263,7 +256,6 @@
         <video id="game-video" playsinline></video>
       </div>
 
-      <!-- แผงปรับเสียง 3 ช่องสด -->
       <div class="live-tuning-panel">
         <div class="tuning-item">
           <label><span>ความกว้างห้อง (Gain):</span><span id="gain-val">1.0x</span></label>
@@ -296,55 +288,48 @@
 <div class="preload-cache" id="preload-container"></div>
 
 <script>
-  /* ==========================================================================
-     📦 ฐานข้อมูลสกินทั้งหมด (รองรับการเพิ่มสกินใหม่และเปลี่ยนภาพปกในอนาคต)
-     ========================================================================== */
+  /* ใส่ ./ นำหน้าเส้นทางไฟล์ทั้งหมดเพื่อความแม่นยำ */
   const SKINS = {
-    // 1. สกินกระต่ายหนีหมาป่า (สกินหลักปัจจุบัน)
     rabbit: {
       id: "rabbit",
       name: "กระต่ายหนีหมาป่า",
       icon: "🐰🐺",
-      thumb: "images/thumb_rabbit.png", // ภาพปกปุ่มสกิน (ถ้าไม่มีไฟล์ภาพจะแสดงสี/ไอคอนแทน)
+      thumb: "./images/thumb_rabbit.png",
       locked: false,
       videos: {
-        intro: "videos/rabbit_intro_.webm",
-        normal: "videos/rabbit_normal_.webm",
-        warning: "videos/rabbit_warning_.webm",
-        danger: "videos/rabbit_danger_.webm",
-        success: "videos/rabbit_success_.webm"
+        intro: "./videos/rabbit_intro_.webm",
+        normal: "./videos/rabbit_normal_.webm",
+        warning: "./videos/rabbit_warning_.webm",
+        danger: "./videos/rabbit_danger_.webm",
+        success: "./videos/rabbit_success_.webm"
       }
     },
-    
-    // 2. สกินแมวโพง (ตัวอย่างสกินถัดไปในอนาคต)
     cat: {
       id: "cat",
       name: "แก๊งแมวโพงหลับปุ๋ย",
       icon: "🐱💤",
-      thumb: "images/thumb_cat.png",
-      locked: true, // ตั้งเป็น true ไว้ถ้ายังทำวิดีโอไม่เสร็จ
+      thumb: "./images/thumb_cat.png",
+      locked: true,
       videos: {
-        intro: "videos/cat/intro.webm",
-        normal: "videos/cat/normal.webm",
-        warning: "videos/cat/warning.webm",
-        danger: "videos/cat/danger.webm",
-        success: "videos/cat/success.webm"
+        intro: "./videos/cat/intro.webm",
+        normal: "./videos/cat/normal.webm",
+        warning: "./videos/cat/warning.webm",
+        danger: "./videos/cat/danger.webm",
+        success: "./videos/cat/success.webm"
       }
     },
-
-    // 3. สกินไดโนเสาร์ (ตัวอย่างสกินในอนาคต)
     dino: {
       id: "dino",
       name: "ไข่ไดโนเสาร์รอกำเนิด",
       icon: "🥚🦖",
-      thumb: "images/thumb_dino.png",
+      thumb: "./images/thumb_dino.png",
       locked: true,
       videos: {
-        intro: "videos/dino/intro.webm",
-        normal: "videos/dino/normal.webm",
-        warning: "videos/dino/warning.webm",
-        danger: "videos/dino/danger.webm",
-        success: "videos/dino/success.webm"
+        intro: "./videos/dino/intro.webm",
+        normal: "./videos/dino/normal.webm",
+        warning: "./videos/dino/warning.webm",
+        danger: "./videos/dino/danger.webm",
+        success: "./videos/dino/success.webm"
       }
     }
   };
@@ -365,7 +350,6 @@
   const muteBtn = document.getElementById('mute-btn');
   const popSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
 
-  // สั่งสร้างปุ่มเลือกสกินบนหน้าแรกตามฐานข้อมูล SKINS อัตโนมัติ
   function renderSkinButtons() {
     const container = document.getElementById('skin-selector-container');
     container.innerHTML = '';
@@ -375,7 +359,6 @@
       const btn = document.createElement('button');
       btn.className = `skin-btn ${key === selectedSkinKey ? 'active' : ''} ${skin.locked ? 'locked' : ''}`;
       
-      // ถ้ามีรูปปกสกิน ให้ใส่ภาพพื้นหลัง ถ้านอนนั้นใช้สีเรียบ
       if (skin.thumb) {
         btn.style.backgroundImage = `url('${skin.thumb}')`;
       }
@@ -652,7 +635,6 @@
   bindSlider('m-warn-slider', 'warn-slider', 'warn-val', 'warn-line', false);
   bindSlider('m-danger-slider', 'danger-slider', 'danger-val', 'danger-line', false);
 
-  // เริ่มต้นสร้างปุ่มสกินและขอสิทธิ์ทดสอบไมค์
   renderSkinButtons();
   preloadAllVideos();
 
