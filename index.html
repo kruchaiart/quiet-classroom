@@ -19,31 +19,37 @@
       position: relative;
       width: 100%;
       aspect-ratio: 16 / 9;
-      /* ใส่ ./ นำหน้าชื่อไฟล์ภาพพื้นหลัง */
       background: #0f3460 url('./3645B4E6-BD79-4590-A1C7-DC1F2A404275.png') center/cover no-repeat;
       border-radius: 24px;
       box-shadow: 0 16px 40px rgba(0,0,0,0.6);
       overflow: hidden;
     }
 
-    /* 1. ปุ่มทับเลือกสกิน */
+    /* 1. ปุ่มทับเลือกสกิน - ขยายใหญ่บังของเดิมมิดชิด */
     .skin-selector-overlay {
       position: absolute;
-      top: 17.5%;
-      left: 1.8%;
-      width: 18.5%;
-      height: 12%;
+      top: 15.5%;
+      left: 1.2%;
+      width: 22.5%;
+      height: 19%;
+      background: #FFF8EA;
+      border: 4px solid #FFB26B;
+      border-radius: 20px;
+      padding: 6px;
       display: flex;
-      gap: 5%;
+      gap: 6px;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+      z-index: 10;
     }
+
     .skin-btn {
       flex: 1;
-      height: 85%;
-      background: #0f3460;
-      border: 3px solid transparent;
-      border-radius: 12px;
+      height: 100%;
+      background: #FFE5AD;
+      border: 3px solid #FFD3B6;
+      border-radius: 14px;
       cursor: pointer;
       overflow: hidden;
       position: relative;
@@ -52,9 +58,9 @@
       transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .skin-btn.active {
-      border-color: #FFD700;
-      box-shadow: 0 0 15px #FFD700;
-      transform: scale(1.08);
+      border-color: #FF7B54;
+      box-shadow: 0 0 12px rgba(255, 123, 84, 0.8);
+      transform: scale(1.05);
     }
     .skin-btn.locked {
       filter: grayscale(0.8);
@@ -66,19 +72,24 @@
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 16px;
+      font-size: 18px;
     }
 
-    /* 2. ช่องทับปรับเวลานับถอยหลัง */
+    /* 2. ช่องทับปรับเวลานับถอยหลัง - ทับปิดเลข 60 เดิม */
     .timer-input-overlay {
       position: absolute;
-      top: 21.5%;
-      right: 2.2%;
-      width: 10%;
-      height: 7%;
+      top: 20.8%;
+      right: 2.5%;
+      width: 10.5%;
+      height: 8.5%;
+      background: #FFF8EA;
+      border: 3px solid #FFB26B;
+      border-radius: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      z-index: 10;
     }
     .timer-input-overlay input {
       width: 100%;
@@ -86,9 +97,9 @@
       background: transparent;
       border: none;
       text-align: center;
-      font-size: 26px;
+      font-size: 28px;
       font-weight: bold;
-      color: #333;
+      color: #FF7B54;
       outline: none;
     }
 
@@ -104,6 +115,7 @@
       cursor: pointer;
       border-radius: 40px;
       animation: pulse 1.8s infinite ease-in-out;
+      z-index: 10;
     }
     .start-btn-overlay:hover {
       transform: scale(1.08) !important;
@@ -130,14 +142,17 @@
       background: transparent;
       border: none;
       cursor: pointer;
+      z-index: 10;
     }
 
+    /* วิดเจ็ตทดสอบไมค์ - ปรับย้ายตำแหน่งขึ้นขอบบน ไม่บังนาฬิกา */
     .mic-test-widget {
       position: absolute;
-      top: 3%;
-      right: 2.2%;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 6px 14px;
+      top: 2.5%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.95);
+      padding: 4px 14px;
       border-radius: 20px;
       display: flex;
       align-items: center;
@@ -145,11 +160,13 @@
       font-size: 13px;
       color: #333;
       font-weight: bold;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10;
     }
-    .mic-bar-preview { width: 60px; height: 8px; background: #ddd; border-radius: 4px; overflow: hidden; }
-    .mic-bar-fill { width: 0%; height: 100%; background: #FF7B54; transition: width 0.05s ease; }
+    .mic-bar-preview { width: 70px; height: 8px; background: #ddd; border-radius: 4px; overflow: hidden; }
+    .mic-bar-fill { width: 0%; height: 100%; background: #4ECCA3; transition: width 0.05s ease; }
 
+    /* Modal ตั้งค่า */
     .modal {
       display: none;
       position: fixed;
@@ -206,20 +223,26 @@
   <!-- 1. หน้าแรก (Home Screen) -->
   <div id="home-screen" class="screen active">
     <div class="home-wrapper">
+      <!-- วิดเจ็ตทดสอบไมค์ (ย้ายขึ้นบนตรงกลาง) -->
       <div class="mic-test-widget">
-        <span>🎙️ ไมค์:</span>
+        <span>🎙️ ทดสอบไมค์:</span>
         <div class="mic-bar-preview">
           <div id="mic-test-fill" class="mic-bar-fill"></div>
         </div>
       </div>
 
+      <!-- 1. ปุ่มทับเลือกสกิน (ขนาดใหญ่บังของเดิม) -->
       <div class="skin-selector-overlay" id="skin-selector-container"></div>
 
+      <!-- 2. ช่องทับปรับเวลา (มีกล่องบังเลข 60 เดิม) -->
       <div class="timer-input-overlay">
         <input type="number" id="game-time" value="60" min="10" max="600">
       </div>
 
+      <!-- 3. ปุ่มทับเริ่มเกม -->
       <button class="start-btn-overlay" onclick="startGame()"></button>
+
+      <!-- 4. ปุ่มทับตั้งค่าฉุกเฉิน (ฟันเฟือง) -->
       <button class="settings-btn-overlay" onclick="toggleSettingsModal(true)"></button>
     </div>
   </div>
@@ -288,7 +311,6 @@
 <div class="preload-cache" id="preload-container"></div>
 
 <script>
-  /* ใส่ ./ นำหน้าเส้นทางไฟล์ทั้งหมดเพื่อความแม่นยำ */
   const SKINS = {
     rabbit: {
       id: "rabbit",
